@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 public class PeerTable {
 
-	public class TableEntry{
+	public static class TableEntry{
 		
 		public TableEntry(InetAddress ip, Integer port){
 			this.IPAddress = ip;
@@ -60,6 +60,14 @@ public class PeerTable {
 	
 	public boolean isEmpty(){
 		return this.table.isEmpty();
+	}
+	
+	public void mergeWithTable(PeerTable other){
+		PeerLog.logMessage(getLogName(), "Merging tables..");
+	}
+	
+	private String getLogName(){
+		return "PeerTable";
 	}
 	
 }

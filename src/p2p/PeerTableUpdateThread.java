@@ -27,27 +27,37 @@ public class PeerTableUpdateThread extends Thread {
 				e.printStackTrace();
 			}
 		}
-		PeerLog.logMessage("PeerTableUpdateThread", "Update Thread now stopping.");
+		PeerLog.logMessage(getLogName(), "Update Thread now stopping.");
 	}
 	
 	private void updateRoutine(){
-		PeerLog.logMessage("PeerTableUpdateThread", "Update routine started..");
+		PeerLog.logMessage(getLogName(), "Update routine started..");
 		PeerTable tempPeerTable = getPeerTable();
 		
 		boolean connectionSuccess = false;
+		Socket peerConnectionSocket = null;
 		
-		while (!connectionSuccess && !tempPeerTable.isEmpty()){
+		while (!connectionSuccess ){
+			if (tempPeerTable.isEmpty()){
+				PeerLog.logMessage(getLogName(), "PeerTable is empty. Aborting..");
+				return;
+			}
 			PeerTable.TableEntry tmpEntry = tempPeerTable.getRandomEntry();
-			Socket socket = this.owningPeer.connectToPeer(tmpEntry);
+			peerConnectionSocket = this.owningPeer.connectToPeer(tmpEntry);
 			
-			if (socket != null){
+			
+			if (peerConnectionSocket != null){
 				connectionSuccess = true;
 			}else{
 				tempPeerTable.removeEntry(tmpEntry);
-				PeerLog.logMessage("PeerTableUpdateThread", "Table Entry removed due to connection issues.");
+				PeerLog.logMessage(getLogName(), "Table Entry removed due to connection issues.");
 			}
 		}
 		
+		if (connectionSuccess){
+			PeerLog.logMessage(getLogName(), "Successfully connected to node, syncing PeerTables now..");
+			owningPeer.sendReceivePeerTableToNode(peerConnectionSocket, tempPeerTable);
+		}
 		
 		
 		
@@ -59,6 +69,10 @@ public class PeerTableUpdateThread extends Thread {
 	
 	private PeerTable getPeerTable(){
 		return owningPeer.getPeerTable();
+	}
+	
+	private String getLogName(){
+		return this.owningPeer.getLogName()+".PeerTableUpdateThread";
 	}
 	
 }
