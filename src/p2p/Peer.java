@@ -12,6 +12,20 @@ import p2p.utility.PeerLog;
 import p2p.utility.PeerTable;
 import p2p.utility.PeerTable.TableEntry;
 
+/**
+ * The main peer class.
+ * This holds 2 Threads:
+ * 	- A server listen thread, which listens on a given ServerSocket for incoming connections of other peers.
+ * 	- A update thread, which periodically connects to a random Node (chosen from Peertable) and 
+ * 		synchronizes the PeerTables with it.
+ * 
+ * 
+ * 
+ * @author dAmihl
+ *
+ */
+
+
 public class Peer {
 
 	private PeerTable peerTable;
@@ -70,6 +84,13 @@ public class Peer {
 	}
 	
 	
+	/**
+	 * Handles a connected node, called by ListenThread (ServerSocket)
+	 * Responds to incoming messages, which can be
+	 * 	1. A PeerTable, which indicates a synchronization of the tables or
+	 * 	2. A message, which has to be forwarded to this peers known nodes.
+	 * @param otherNode
+	 */
 	protected synchronized void handleConnectedNode(Socket otherNode){
 		PeerLog.logMessage(getLogName(), "Node connected. Waiting for message..");
 		ObjectInputStream in = null;
@@ -105,6 +126,13 @@ public class Peer {
 		}
 	}
 	
+	
+	/**
+	 * Called when the handler received a PeerTable by another node.
+	 * Merges the peer tables and responds with it's own peer table.
+	 * @param receivedFrom
+	 * @param otherTable
+	 */
 	private void receivedPeerTable(Socket receivedFrom, PeerTable otherTable){
 		ObjectOutputStream out = null;
 		try {
@@ -140,6 +168,12 @@ public class Peer {
 	}
 	
 	
+	/**
+	 * Called when a Message object is received by the handler.
+	 * Reads the message and forwards it to it's known nodes. (PeerTable)
+	 * @param receivedFrom
+	 * @param msg
+	 */
 	private void receivedMessage(Socket receivedFrom, P2PMessageOneToAll msg){
 		PeerLog.logMessage(getLogName(), "Received Message: '"+msg.getMessage()+"'");
 		msg.peerVisited(getMyPeerTableEntry());
@@ -152,11 +186,19 @@ public class Peer {
 		}
 	}
 	
-	
+	/**
+	 * Returns the peer table object.
+	 * @return
+	 */
 	public synchronized PeerTable getPeerTable(){
 		return this.peerTable;
 	}
 	
+	/**
+	 * Trys to connect to a peer node.
+	 * @param peer
+	 * @return
+	 */
 	protected synchronized Socket connectToPeer(PeerTable.TableEntry peer){
 		try {
 			Socket connectionSocket = new Socket(peer.getIP(), peer.getPort());
@@ -169,6 +211,12 @@ public class Peer {
 		
 	}
 	
+	/**
+	 * Called by the update thread to send it's peer table to a connected peer
+	 * and wait for response. Then merges the received table and picks randomly N entries.
+	 * @param connectedPeer
+	 * @param localTable
+	 */
 	protected synchronized void sendReceivePeerTableToNode(Socket connectedPeer, PeerTable localTable){
 		PeerLog.logMessage(getLogName(), "Exchanging PeerTable with connected Node..!");
 		
@@ -216,7 +264,9 @@ public class Peer {
 		}
 	}
 	
-	
+	/**
+	 * Closes a peer and all its threads.
+	 */
 	public void closePeer(){
 		PeerLog.logMessage(getLogName(), "Closing peer!");
 		if (this.listenThread != null){
@@ -230,18 +280,38 @@ public class Peer {
 		
 	}
 	
+	/**
+	 * Returns the log name. used for PeerLog static log class.
+	 * @return
+	 */
 	protected String getLogName(){
 		return this.peerName+"@Peer("+this.peerPort+")";
 	}
 	
+	/**
+	 * Generates a PeerTable Entry from this node. e.g. this will be added when sending it's own peer
+	 * table to another node.
+	 * @return
+	 */
 	protected PeerTable.TableEntry getMyPeerTableEntry(){
 		return new PeerTable.TableEntry(this.listenThread.getServerSocketIP(), this.listenThread.getServerSocketPort());
 	}
 	
+	/**
+	 * Adds a node-node connection to the peer table.
+	 * @param ip
+	 * @param port
+	 */
 	public void addConnection(InetAddress ip, Integer port){
 		this.getPeerTable().addEntry(new TableEntry(ip, port));
 	}
 	
+	/**
+	 * Adds a node-node connection to the peer table. easier to use since ip address can be given
+	 * as String.
+	 * @param ipStr
+	 * @param port
+	 */
 	public void addConnection(String ipStr, Integer port){
 		try {
 			this.getPeerTable().addEntry(new TableEntry(InetAddress.getByName(ipStr), port));
@@ -251,6 +321,10 @@ public class Peer {
 		}
 	}
 	
+	/**
+	 * Sends a message to all known (PeerTable) nodes.
+	 * @param message
+	 */
 	public void sendOneToAllMessage(String message){
 		P2PMessageOneToAll msg = new P2PMessageOneToAll(message, getMyPeerTableEntry());
 		for (PeerTable.TableEntry e: this.getPeerTable().getTable()){
@@ -258,6 +332,11 @@ public class Peer {
 		}
 	}
 	
+	/**
+	 * Helper method to send a message to a single node.
+	 * @param peer
+	 * @param msg
+	 */
 	private void sendMessageToPeer(PeerTable.TableEntry peer, P2PMessageOneToAll msg){
 		PeerLog.logMessage(getLogName(), "Sending message to "+peer+".");
 		Socket peerSocket = connectToPeer(peer);

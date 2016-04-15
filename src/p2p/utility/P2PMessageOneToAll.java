@@ -3,6 +3,14 @@ package p2p.utility;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+/**
+ * The Peer2Peer - OneToAll message object.
+ * Holds an array of nodes, who already read this message.
+ * Peers check when forwarding, which known Nodes have already read this message.
+ * May be inconsistent, because of the nature of a P2P network and multicasting..
+ * @author dAmihl
+ *
+ */
 
 public class P2PMessageOneToAll implements Serializable {
 

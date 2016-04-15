@@ -5,6 +5,13 @@ import java.net.Socket;
 import p2p.utility.PeerLog;
 import p2p.utility.PeerTable;
 
+/**
+ * A peer's update thread. Periodically picks a random node from its known nodes (in PeerTable)
+ * and trys to sync the PeerTables.
+ * @author dAmihl
+ *
+ */
+
 public class PeerTableUpdateThread extends Thread {
 
 	private static final Integer UPDATE_RATE_SECONDS = 10;
@@ -30,6 +37,10 @@ public class PeerTableUpdateThread extends Thread {
 		PeerLog.logMessage(getLogName(), "Update Thread now stopping.");
 	}
 	
+	/**
+	 * The update routine called periodically. connects to a random node
+	 * and sends its peer table, while receiving the other's peer table.
+	 */
 	private void updateRoutine(){
 		PeerLog.logMessage(getLogName(), "Update routine started..");
 		PeerTable tempPeerTable = getPeerTable();
@@ -63,6 +74,9 @@ public class PeerTableUpdateThread extends Thread {
 		
 	}
 	
+	/**
+	 * stops the thread.
+	 */
 	public synchronized void stopUpdateThread(){
 		isRunning = false;
 	}

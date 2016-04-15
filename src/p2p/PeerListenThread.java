@@ -8,6 +8,14 @@ import java.net.UnknownHostException;
 
 import p2p.utility.PeerLog;
 
+/**
+ * The PeerListenThread,
+ * holds the server socket to respond to connections from other nodes.
+ * Receives e.g. peer tables and messages.
+ * @author dAmihl
+ *
+ */
+
 public class PeerListenThread extends Thread {
 
 	private Peer owningPeer;

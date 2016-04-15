@@ -3,10 +3,15 @@ package application;
 import java.util.ArrayList;
 
 import p2p.Peer;
-import p2p.utility.P2PMessageOneToAll;
 
 public class PeerApplication {
 	
+	
+	/**
+	 * Main test application
+	 * creates 3*N peers and connects them in a "line" by
+	 * adding the address of the peer previously created to the new peer. (PeerTable entry)
+	 */
 	
 	private static Integer START_PORT = 1234;
 	
@@ -53,6 +58,12 @@ public class PeerApplication {
 			peers.add(tmpPeer);
 		}
 		
+		
+		/**
+		 * For message demonstration.
+		 * after 11 seconds, a peer sends a message to all his entries in peer table.
+		 * One update cycle should be already done by 11 seconds.
+		 */
 		try {
 			Thread.sleep(11000);
 		} catch (InterruptedException e) {

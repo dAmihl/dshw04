@@ -5,6 +5,16 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Random;
 
+/**
+ * PeerTable. Holds TableEntries for each connected node.
+ * Serializable, because the PeerTable gets send to other nodes.
+ * 
+ * Functions for merging peer tables (needed to sync peertables between nodes) and
+ * picking a random subset of N nodes (also needed when syncing).
+ * @author dAmihl
+ *
+ */
+
 public class PeerTable implements Serializable {
 
 	/**
