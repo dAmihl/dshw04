@@ -3,6 +3,7 @@ package p2p.utility;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Random;
 
 public class PeerTable implements Serializable {
 
@@ -98,5 +99,21 @@ public class PeerTable implements Serializable {
 			result += e.toString()+"\n";
 		}
 		return result;
+	}
+	
+	public synchronized void takeSubsetOfN(Integer N){
+		ArrayList<TableEntry> newList = new ArrayList<>();
+		for (int i = 0; i < Math.min(N, this.table.size()); i++){
+			
+			int randIndex = new Random().nextInt(this.table.size());
+			TableEntry chosenEntry = this.table.get(randIndex);
+			if (!newList.contains(chosenEntry)){
+				newList.add(this.table.get(randIndex));
+			}else{
+				i--;
+				continue;
+			}
+		}
+		this.table = newList;
 	}
 }

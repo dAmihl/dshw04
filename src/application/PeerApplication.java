@@ -1,12 +1,14 @@
 package application;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 import p2p.Peer;
-import p2p.utility.PeerTable;
 
 public class PeerApplication {
+	
+	
+	private static Integer START_PORT = 1234;
+	
  public static void main(String[] args) {
 	System.out.println("PeerApplication started.");
 	
@@ -23,19 +25,32 @@ public class PeerApplication {
 	 * Next update: P2 and P4 exchange tables: P4 has now address of P3
 	 * 	and P3 has Address of P4.
 	 */
-	int START_IP = 1234;
-	@SuppressWarnings("unused")
-	Peer p1 = new Peer(START_IP, "P1");
-	Peer p2 = new Peer(START_IP+1, "P2");
-	Peer p3 = new Peer(START_IP+2, "P3");
-	Peer p4 = new Peer(START_IP+3, "P4");
-	try {
-		p2.getPeerTable().addEntry(new PeerTable.TableEntry(InetAddress.getByName("127.0.0.1"), 1234));
-		p4.getPeerTable().addEntry(new PeerTable.TableEntry(InetAddress.getByName("127.0.0.1"), 1235));
-		p3.getPeerTable().addEntry(new PeerTable.TableEntry(InetAddress.getByName("127.0.0.1"), 1234));
-	} catch (UnknownHostException e) {
-		// TODO Auto-generated catch block
-		e.printStackTrace();
+	
+	Integer N;
+	
+	if (args.length == 0){
+		N = 3;
+	}else{
+		N = Integer.parseInt(args[0]);
 	}
+	
+	createNetwork(N);
+	
+	
  }
+ 
+ 
+ private static void createNetwork(Integer N){
+	 	
+	 	System.out.println("Creating network of 3*"+N+" nodes.");
+	 
+	 	ArrayList<Peer> peers = new ArrayList<>();
+		
+		for (int i = 0; i < 3*N; i++){
+			Peer tmpPeer = new Peer(START_PORT+i, "P"+i, N);
+			tmpPeer.addConnection("127.0.0.1", START_PORT+i-1);
+			peers.add(tmpPeer);
+		}
+ }
+ 
 }

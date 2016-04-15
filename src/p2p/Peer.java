@@ -3,11 +3,14 @@ package p2p;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 import p2p.utility.P2PMessage;
 import p2p.utility.PeerLog;
 import p2p.utility.PeerTable;
+import p2p.utility.PeerTable.TableEntry;
 
 public class Peer {
 
@@ -19,11 +22,14 @@ public class Peer {
 	private PeerTableUpdateThread updateThread;
 	private PeerListenThread listenThread;
 	
+	private Integer sizeTable;
 	
-	public Peer(Integer peerPort){
+	
+	public Peer(Integer peerPort, Integer sizeTable){
 		this.peerTable = new PeerTable();
 		this.peerPort = peerPort;
 		this.peerName = "UNNAMED";
+		this.sizeTable = sizeTable;
 		
 		this.updateThread = new PeerTableUpdateThread(this);
 		this.updateThread.start();
@@ -36,10 +42,11 @@ public class Peer {
 		PeerLog.logMessage(getLogName(), "Peer created on port "+this.peerPort);
 	}
 	
-	public Peer(Integer peerPort, String peerName){
+	public Peer(Integer peerPort, String peerName, Integer sizeTable){
 		this.peerTable = new PeerTable();
 		this.peerPort = peerPort;
 		this.peerName = peerName;
+		this.sizeTable = sizeTable;
 		
 		this.updateThread = new PeerTableUpdateThread(this);
 		this.updateThread.start();
@@ -115,6 +122,7 @@ public class Peer {
 			// merge the peer tables
 			this.getPeerTable().mergeWithTable(otherTable);
 			this.getPeerTable().removeEntry(getMyPeerTableEntry());
+			this.getPeerTable().takeSubsetOfN(sizeTable);
 			PeerLog.logMessage(getLogName(), "Peer Tables exchanged.");
 			PeerLog.logMessage(getLogName(), this.getPeerTable().toString());
 			receivedFrom.close();
@@ -176,6 +184,7 @@ public class Peer {
 				//merge
 				this.getPeerTable().mergeWithTable(otherTable);
 				this.getPeerTable().removeEntry(getMyPeerTableEntry());
+				this.getPeerTable().takeSubsetOfN(sizeTable);
 				PeerLog.logMessage(getLogName(), "Peer Tables exchanged.");
 				PeerLog.logMessage(getLogName(), this.getPeerTable().toString());
 				connectedPeer.close();
@@ -219,6 +228,19 @@ public class Peer {
 	
 	protected PeerTable.TableEntry getMyPeerTableEntry(){
 		return new PeerTable.TableEntry(this.listenThread.getServerSocketIP(), this.listenThread.getServerSocketPort());
+	}
+	
+	public void addConnection(InetAddress ip, Integer port){
+		this.getPeerTable().addEntry(new TableEntry(ip, port));
+	}
+	
+	public void addConnection(String ipStr, Integer port){
+		try {
+			this.getPeerTable().addEntry(new TableEntry(InetAddress.getByName(ipStr), port));
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	
