@@ -3,6 +3,7 @@ package application;
 import java.util.ArrayList;
 
 import p2p.Peer;
+import p2p.utility.P2PMessageOneToAll;
 
 public class PeerApplication {
 	
@@ -51,6 +52,16 @@ public class PeerApplication {
 			tmpPeer.addConnection("127.0.0.1", START_PORT+i-1);
 			peers.add(tmpPeer);
 		}
+		
+		try {
+			Thread.sleep(11000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("Creating test message");
+		peers.get(2).sendOneToAllMessage("Hello!!");
+		
  }
  
 }

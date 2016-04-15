@@ -7,7 +7,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-import p2p.utility.P2PMessage;
+import p2p.utility.P2PMessageOneToAll;
 import p2p.utility.PeerLog;
 import p2p.utility.PeerTable;
 import p2p.utility.PeerTable.TableEntry;
@@ -73,24 +73,23 @@ public class Peer {
 	protected synchronized void handleConnectedNode(Socket otherNode){
 		PeerLog.logMessage(getLogName(), "Node connected. Waiting for message..");
 		ObjectInputStream in = null;
+		Object readObject = null;
 		try {
 			in = new ObjectInputStream(otherNode.getInputStream());
 			
 			
 			try {
 				// receive other peer table
-				PeerTable otherTable = (PeerTable) in.readObject();
+				readObject = in.readObject();
+				PeerTable otherTable = (PeerTable) readObject;
 				receivedPeerTable(otherNode, otherTable);
 				
+			} catch (ClassCastException e) {
+				PeerLog.logMessage(getLogName(), "Not a table, must be message..");
+				P2PMessageOneToAll msg = (P2PMessageOneToAll) readObject;
+				receivedMessage(otherNode, msg);
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
-				
-				try {
-					P2PMessage msg = (P2PMessage) in.readObject();
-					receivedMessage(otherNode, msg);
-				} catch (ClassNotFoundException e1) {
-					e1.printStackTrace();
-				}
 			}
 					
 		} catch (IOException e) {
@@ -140,8 +139,17 @@ public class Peer {
 		}
 	}
 	
-	private void receivedMessage(Socket receivedFrom, P2PMessage msg){
+	
+	private void receivedMessage(Socket receivedFrom, P2PMessageOneToAll msg){
+		PeerLog.logMessage(getLogName(), "Received Message: '"+msg.getMessage()+"'");
+		msg.peerVisited(getMyPeerTableEntry());
 		
+		// send message further
+		for (PeerTable.TableEntry e: this.getPeerTable().getTable()){
+			if (!msg.isPeerAlreadyVisited(e)){
+				sendMessageToPeer(e, msg);
+			}
+		}
 	}
 	
 	
@@ -240,6 +248,46 @@ public class Peer {
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+	}
+	
+	public void sendOneToAllMessage(String message){
+		P2PMessageOneToAll msg = new P2PMessageOneToAll(message, getMyPeerTableEntry());
+		for (PeerTable.TableEntry e: this.getPeerTable().getTable()){
+			sendMessageToPeer(e, msg);
+		}
+	}
+	
+	private void sendMessageToPeer(PeerTable.TableEntry peer, P2PMessageOneToAll msg){
+		PeerLog.logMessage(getLogName(), "Sending message to "+peer+".");
+		Socket peerSocket = connectToPeer(peer);
+		ObjectOutputStream out = null;
+		if (peerSocket != null){
+			
+			try {
+				out = new ObjectOutputStream(peerSocket.getOutputStream());
+				out.writeObject(msg);
+				out.flush();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} finally{
+				if (out != null){
+					try {
+						out.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+				try {
+					peerSocket.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			
 		}
 	}
 	
