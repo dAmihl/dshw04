@@ -24,10 +24,11 @@ public class PeerApplication {
 	 * 	and P3 has Address of P4.
 	 */
 	int START_IP = 1234;
-	Peer p1 = new Peer(START_IP);
-	Peer p2 = new Peer(START_IP+1);
-	Peer p3 = new Peer(START_IP+2);
-	Peer p4 = new Peer(START_IP+3);
+	@SuppressWarnings("unused")
+	Peer p1 = new Peer(START_IP, "P1");
+	Peer p2 = new Peer(START_IP+1, "P2");
+	Peer p3 = new Peer(START_IP+2, "P3");
+	Peer p4 = new Peer(START_IP+3, "P4");
 	try {
 		p2.getPeerTable().addEntry(new PeerTable.TableEntry(InetAddress.getByName("127.0.0.1"), 1234));
 		p4.getPeerTable().addEntry(new PeerTable.TableEntry(InetAddress.getByName("127.0.0.1"), 1235));

@@ -79,7 +79,6 @@ public class PeerTable implements Serializable {
 	}
 	
 	public void mergeWithTable(PeerTable other){
-		PeerLog.logMessage(getLogName(), "Merging tables..");
 		for(TableEntry e: other.table){
 			if (!this.table.contains(e)){
 				this.table.add(e);
@@ -87,6 +86,7 @@ public class PeerTable implements Serializable {
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	private String getLogName(){
 		return "PeerTable";
 	}

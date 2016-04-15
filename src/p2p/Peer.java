@@ -3,8 +3,6 @@ package p2p;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.InetAddress;
-import java.net.ServerSocket;
 import java.net.Socket;
 
 import p2p.utility.P2PMessage;
@@ -15,6 +13,8 @@ public class Peer {
 
 	private PeerTable peerTable;
 	
+	private String peerName;
+	
 	private Integer peerPort;
 	private PeerTableUpdateThread updateThread;
 	private PeerListenThread listenThread;
@@ -23,6 +23,7 @@ public class Peer {
 	public Peer(Integer peerPort){
 		this.peerTable = new PeerTable();
 		this.peerPort = peerPort;
+		this.peerName = "UNNAMED";
 		
 		this.updateThread = new PeerTableUpdateThread(this);
 		this.updateThread.start();
@@ -30,7 +31,35 @@ public class Peer {
 		this.listenThread = new PeerListenThread(this, this.peerPort);
 		this.listenThread.start();
 		
+		addShutdownHook();
+		
 		PeerLog.logMessage(getLogName(), "Peer created on port "+this.peerPort);
+	}
+	
+	public Peer(Integer peerPort, String peerName){
+		this.peerTable = new PeerTable();
+		this.peerPort = peerPort;
+		this.peerName = peerName;
+		
+		this.updateThread = new PeerTableUpdateThread(this);
+		this.updateThread.start();
+		
+		this.listenThread = new PeerListenThread(this, this.peerPort);
+		this.listenThread.start();
+		
+		addShutdownHook();
+		
+		PeerLog.logMessage(getLogName(), "Peer created on port "+this.peerPort);
+	}
+	
+	private void addShutdownHook(){
+		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+			
+			@Override
+			public void run() {
+				closePeer();
+			}
+		}));
 	}
 	
 	
@@ -132,16 +161,13 @@ public class Peer {
 		try {
 			out = new ObjectOutputStream(connectedPeer.getOutputStream());
 			try {
-				PeerLog.logMessage(getLogName(), "Sending my PeerTable now..");
 				//send my peer table
 				PeerTable tableToSend = this.getPeerTable();
 				PeerLog.logMessage(getLogName(), tableToSend.toString());
 				tableToSend.addEntry(getMyPeerTableEntry());
 				out.writeObject(tableToSend);
 				out.flush();
-				
-				PeerLog.logMessage(getLogName(), "PeerTable sent, waiting for response..");
-				
+								
 				in = new ObjectInputStream(connectedPeer.getInputStream());
 				// receive other peer table
 				PeerTable otherTable = (PeerTable) in.readObject();
@@ -175,6 +201,7 @@ public class Peer {
 	
 	
 	public void closePeer(){
+		PeerLog.logMessage(getLogName(), "Closing peer!");
 		if (this.listenThread != null){
 			this.listenThread.stopListenThread();
 		}
@@ -182,10 +209,12 @@ public class Peer {
 		if (this.updateThread != null){
 			updateThread.stopUpdateThread();
 		}
+		
+		
 	}
 	
 	protected String getLogName(){
-		return "Peer("+this.peerPort+")";
+		return this.peerName+"@Peer("+this.peerPort+")";
 	}
 	
 	protected PeerTable.TableEntry getMyPeerTableEntry(){
