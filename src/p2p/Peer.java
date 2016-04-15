@@ -3,6 +3,7 @@ package p2p;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -84,6 +85,10 @@ public class Peer {
 			
 			// merge the peer tables
 			this.getPeerTable().mergeWithTable(otherTable);
+			this.getPeerTable().removeEntry(getMyPeerTableEntry());
+			PeerLog.logMessage(getLogName(), "Peer Tables exchanged.");
+			PeerLog.logMessage(getLogName(), this.getPeerTable().toString());
+			receivedFrom.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally{
@@ -120,36 +125,52 @@ public class Peer {
 	}
 	
 	protected synchronized void sendReceivePeerTableToNode(Socket connectedPeer, PeerTable localTable){
-		PeerLog.logMessage(getLogName(), "Exchanging PeerTable with connected Node..");
+		PeerLog.logMessage(getLogName(), "Exchanging PeerTable with connected Node..!");
 		
 		ObjectOutputStream out;
 		ObjectInputStream in;
 		try {
-			in = new ObjectInputStream(connectedPeer.getInputStream());
 			out = new ObjectOutputStream(connectedPeer.getOutputStream());
-			
 			try {
+				PeerLog.logMessage(getLogName(), "Sending my PeerTable now..");
 				//send my peer table
 				PeerTable tableToSend = this.getPeerTable();
+				PeerLog.logMessage(getLogName(), tableToSend.toString());
 				tableToSend.addEntry(getMyPeerTableEntry());
 				out.writeObject(tableToSend);
+				out.flush();
 				
 				PeerLog.logMessage(getLogName(), "PeerTable sent, waiting for response..");
 				
+				in = new ObjectInputStream(connectedPeer.getInputStream());
 				// receive other peer table
 				PeerTable otherTable = (PeerTable) in.readObject();
 				otherTable.removeEntry(getMyPeerTableEntry());
 				
 				//merge
 				this.getPeerTable().mergeWithTable(otherTable);
+				this.getPeerTable().removeEntry(getMyPeerTableEntry());
+				PeerLog.logMessage(getLogName(), "Peer Tables exchanged.");
+				PeerLog.logMessage(getLogName(), this.getPeerTable().toString());
+				connectedPeer.close();
+				
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			}
 					
 		} catch (IOException e) {
 			e.printStackTrace();
+		} catch (Exception e){
+			e.printStackTrace();
 		}
 		
+		
+		try {
+			connectedPeer.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	

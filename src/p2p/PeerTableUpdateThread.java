@@ -7,7 +7,7 @@ import p2p.utility.PeerTable;
 
 public class PeerTableUpdateThread extends Thread {
 
-	private static final Integer UPDATE_RATE_SECONDS = 5;
+	private static final Integer UPDATE_RATE_SECONDS = 10;
 	private boolean isRunning = true;
 	private Peer owningPeer;
 	

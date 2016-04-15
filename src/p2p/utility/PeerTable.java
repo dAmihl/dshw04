@@ -1,12 +1,23 @@
 package p2p.utility;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.util.ArrayList;
 
-public class PeerTable {
+public class PeerTable implements Serializable {
 
-	public static class TableEntry{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1194745469309953800L;
+
+	public static class TableEntry implements Serializable{
 		
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 3895097921506278137L;
+
 		public TableEntry(InetAddress ip, Integer port){
 			this.IPAddress = ip;
 			this.port = port;
@@ -32,6 +43,11 @@ public class PeerTable {
 				return false;
 			}
 			
+		}
+		
+		@Override
+		public String toString() {
+			return new String("| "+this.getIP()+" | "+this.getPort()+" |");
 		}
 	}
 	
@@ -64,10 +80,23 @@ public class PeerTable {
 	
 	public void mergeWithTable(PeerTable other){
 		PeerLog.logMessage(getLogName(), "Merging tables..");
+		for(TableEntry e: other.table){
+			if (!this.table.contains(e)){
+				this.table.add(e);
+			}
+		}
 	}
 	
 	private String getLogName(){
 		return "PeerTable";
 	}
 	
+	@Override
+	public String toString() {
+		String result = "\n| IP | PORT |"+"\n";
+		for (TableEntry e : table){
+			result += e.toString()+"\n";
+		}
+		return result;
+	}
 }

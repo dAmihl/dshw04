@@ -1,9 +1,11 @@
 package p2p;
 
 import java.io.IOException;
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 import p2p.utility.PeerLog;
 
@@ -67,7 +69,13 @@ public class PeerListenThread extends Thread {
 	}
 	
 	protected InetAddress getServerSocketIP(){
-		return this.serverSocket.getInetAddress();
+		try {
+			return InetAddress.getByName(InetAddress.getLocalHost().getHostAddress());
+		} catch (UnknownHostException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	protected Integer getServerSocketPort(){
